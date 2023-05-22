@@ -1,2 +1,4 @@
 /.idea/
+/storage/
 /vendor/
+/config.yaml

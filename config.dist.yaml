@@ -1,0 +1,14 @@
+debug: false # Debug mode, includes additional debug information
+database: # Database settings
+  dsn: ./storage/database.db # DSN database connection string or for SQLite, the path to the database file
+storage: # File storage settings
+  static_path: ./storage/static # Path to the directory for storing static files available at host:port/static/
+http: # Web server settings
+  host: localhost # Application domain. Can be empty for access from anywhere
+  port: 8000 # Application connection port. Must contain an integer
+file_context: # File storage context settings
+  default: # Context name. A string matching the regex \w{1,255}
+    max_number_of_files: ~ # Maximum number of files to upload at one time. Can be null to disable the limit
+    max_content_length: ~ # Maximum size (in bytes) of uploaded files at one time. Can be null to disable the limit
+    max_file_size: 1024000 # The maximum size (in bytes) of an individual file. Can be null to disable the limit
+    allowed_mime_types: ~ # Array of mime-types available for upload. Can be null to remove restrictions
