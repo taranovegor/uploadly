@@ -1,0 +1,221 @@
+openapi: 3.0.3
+info:
+  title: Uploadly
+  description: Easily store and manage your files in the cloud
+  contact:
+    email: dev@taranovegor.com
+  license:
+    name: MIT
+    url: https://github.com/taranovegor/uploadly/LICENSE
+  version: 0.2.0
+tags:
+  - name: Management
+    description: File management
+  - name: Static
+    description: Access to static resources
+paths:
+  "/{context}":
+    post:
+      tags:
+        - Management
+      summary: Upload files to context
+      description: Multiple file uploads based on context rules will be uploaded to
+        the appropriate storage
+      parameters:
+        - in: path
+          name: context
+          required: true
+          schema:
+            type: string
+            pattern: ^\w{1,255}$
+            example: default
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files_name:
+                  type: array
+                  description: field with any name containing an array of files
+                  items:
+                    type: string
+                    format: binary
+                file_name:
+                  type: string
+                  format: binary
+                  description: field with any name containing a file
+      responses:
+        "200":
+          description: Files have been processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilesSaveMap"
+        "404":
+          description: Specified context not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          description: The total size of the uploaded files is too large
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
+  "/{id}":
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}}$
+          example: 00000000-0000-0000-0000-000000000000
+    get:
+      tags:
+        - Management
+      summary: Get information about a stored file by ID
+      description: Getting full information about a stored file by its identifier
+      responses:
+        "200":
+          description: File successfully found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/File"
+        "404":
+          description: File was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+        - Management
+      summary: Delete stored file by ID
+      description: Complete deletion of a file including stored content by its identifier
+      responses:
+        "204":
+          description: File successfully deleted
+        "404":
+          description: File was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/500"
+  "/static/{filepath}":
+    parameters:
+      - in: path
+        name: filepath
+        required: true
+        schema:
+          type: string
+          example: static/default/00000000-0000-0000-0000-000000000000.png
+    get:
+      tags:
+        - Static
+      summary: Get the contents of the stored file
+      responses:
+        "200":
+          description: File contents
+        "404":
+          $ref: "#/components/responses/404"
+components:
+  responses:
+    "404":
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    "500":
+      description: Something went wrong
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    FilesSaveMap:
+      type: object
+      properties:
+        files_or_file_name:
+          $ref: "#/components/schemas/FileSaveSlice"
+    FileSaveSlice:
+      type: array
+      description: An array of uploaded files under the name specified in the root
+        object key. Order is guaranteed
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/File"
+          - $ref: "#/components/schemas/Error"
+    File:
+      type: object
+      description: Information about the loaded object
+      properties:
+        id:
+          type: string
+          description: UUIDv4 unique identifier
+          minLength: 32
+          maxLength: 32
+          nullable: false
+          example: 00000000-0000-0000-0000-000000000000
+        context:
+          type: string
+          description: Name of the context in which the file is stored
+          minLength: 1
+          maxLength: 255
+          nullable: false
+          example: context
+        origin_filename:
+          type: string
+          description: File name given by the user before uploading
+          minLength: 1
+          maxLength: 255
+          nullable: false
+          example: LSaTSB.jpeg
+        mime_type:
+          type: string
+          description: mime-type of the stored file
+          minLength: 1
+          maxLength: 255
+          nullable: false
+          example: image/jpeg
+        size:
+          type: integer
+          description: Stored file size in bytes
+          nullable: false
+          example: 1000
+        created_at:
+          type: string
+          description: File upload date
+          minLength: 1
+          nullable: false
+          example: 1969-07-20T20:17:39.000Z
+        url:
+          type: string
+          description: Resource access url
+          minLength: 1
+          nullable: false
+          example: /static/default/00000000-0000-0000-0000-000000000000.png
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: Error code, can contain both http and internal system code
+          nullable: false
+          example: 200
+        message:
+          type: string
+          description: Error message
+          minLength: 0
+          nullable: false
+          example: Example Error `200`!!1
